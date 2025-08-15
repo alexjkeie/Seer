@@ -81,12 +81,12 @@ class ReportPanel(discord.ui.Modal, title="New Report"):
             description=f"A new report has been filed by `{self.reporter_username.value}`.",
             color=discord.Color.blue()
         )
-        embed.add_field(name="REPORTER", value=f"**Username:** `{self.reporter_username.value}`\n**ID:** <@{interaction.user.id}>", inline=False)
-        embed.add_field(name="REPORTED USER", value=f"**Username:** `{self.reported_username.value}`\n**ID:** <@{self.reported_id.value}>", inline=False)
+        embed.add_field(name="REPORTER", value=f"**Username:** `{self.reporter_username.value}`\n**ID:** {interaction.user.id}", inline=False)
+        embed.add_field(name="REPORTED USER", value=f"**Username:** `{self.reported_username.value}`\n**ID:** {self.reported_id.value}>", inline=False)
         embed.add_field(name="REASON", value=self.reason.value, inline=False)
         if self.additional_info.value:
             embed.add_field(name="ADDITIONAL INFO", value=self.additional_info.value, inline=False)
-        embed.set_footer(text=f"Reported from server: {interaction.guild.name} | Seer Bot")
+        embed.set_footer(text=f"Reported from server: {interaction.guild.name} | By seer")
         
         # Log the embed to all registered report channels
         logged_to_count = 0
