@@ -7,7 +7,7 @@ import uuid
 # Load environment variables for the bot token
 try:
     BOT_TOKEN = os.environ['BOT_TOKEN']
-    # You still need to replace this with your actual role ID.
+    # The provided role ID for the /new command
     REPORT_ROLE_ID = 1405908410032984144
 except KeyError:
     print("Error: 'BOT_TOKEN' environment variable not found. Please set it in Railway.")
@@ -42,18 +42,34 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 class ReportPanel(discord.ui.Modal, title="New Report"):
     """Modal to collect all report information at once."""
-    reported_discord_id = discord.ui.TextInput(
-        label="Reported Discord ID",
+    reporter_username = discord.ui.TextInput(
+        label="Your Discord Username",
+        placeholder="e.g., JaneDoe#1234",
+        required=True
+    )
+    reported_username = discord.ui.TextInput(
+        label="Reported User's Discord Username",
+        placeholder="e.g., JohnDoe#5678",
+        required=True
+    )
+    reported_id = discord.ui.TextInput(
+        label="Reported User's Discord ID",
         placeholder="e.g., 1234567890",
         required=True
     )
     reason = discord.ui.TextInput(
         label="Reason for Report",
         style=discord.TextStyle.long,
-        placeholder="e.g., Harassment, Rule Violation, etc.",
+        placeholder="Provide as much detail as possible...",
         required=True
     )
-    
+    additional_info = discord.ui.TextInput(
+        label="Additional Info (Optional)",
+        style=discord.TextStyle.long,
+        placeholder="Any other details, proof links, or context.",
+        required=False
+    )
+
     async def on_submit(self, interaction: discord.Interaction):
         """Processes the modal submission and logs the report."""
         await interaction.response.send_message("Report submission acknowledged. Logging report...", ephemeral=True)
@@ -62,24 +78,37 @@ class ReportPanel(discord.ui.Modal, title="New Report"):
         
         embed = discord.Embed(
             title=f"NEW REPORT | ID: {report_id}",
-            description="""This log details a report filed through the bot.""",
+            description=f"A new report has been filed by `{self.reporter_username.value}`.",
             color=discord.Color.blue()
         )
-        embed.add_field(name="REPORTER", value=f"<@{interaction.user.id}>", inline=True)
-        embed.add_field(name="REPORTED USER ID", value=f"<@{self.reported_discord_id.value}>", inline=True)
+        embed.add_field(name="REPORTER", value=f"**Username:** `{self.reporter_username.value}`\n**ID:** <@{interaction.user.id}>", inline=False)
+        embed.add_field(name="REPORTED USER", value=f"**Username:** `{self.reported_username.value}`\n**ID:** <@{self.reported_id.value}>", inline=False)
         embed.add_field(name="REASON", value=self.reason.value, inline=False)
-        embed.set_footer(text=f"Logged by {interaction.guild.name} | Seer Bot")
+        if self.additional_info.value:
+            embed.add_field(name="ADDITIONAL INFO", value=self.additional_info.value, inline=False)
+        embed.set_footer(text=f"Reported from server: {interaction.guild.name} | Seer Bot")
         
         # Log the embed to all registered report channels
         logged_to_count = 0
         for guild_id, channel_id in guild_report_logs.items():
             try:
                 guild = bot.get_guild(int(guild_id))
-                if guild:
-                    channel = guild.get_channel(int(channel_id))
-                    if channel:
-                        await channel.send(embed=embed)
-                        logged_to_count += 1
+                if not guild:
+                    print(f"Guild {guild_id} not found.")
+                    continue
+                
+                channel = guild.get_channel(int(channel_id))
+                if not channel:
+                    print(f"Channel {channel_id} not found in guild {guild_id}.")
+                    continue
+
+                # Check for bot's permissions before sending
+                if not channel.permissions_for(guild.me).send_messages:
+                    print(f"Bot lacks 'send_messages' permission in channel {channel.name} ({channel.id}) of guild {guild.name}.")
+                    continue
+                
+                await channel.send(embed=embed)
+                logged_to_count += 1
             except Exception as e:
                 print(f"Failed to log report to guild {guild_id}: {e}")
         
@@ -121,6 +150,11 @@ async def set_report_log(interaction: discord.Interaction, channel: discord.Text
     """
     guild_id = str(interaction.guild_id)
     channel_id = str(channel.id)
+
+    # Check if the bot has permissions to send messages in the selected channel
+    if not channel.permissions_for(interaction.guild.me).send_messages:
+        await interaction.response.send_message(f"I do not have permission to send messages in {channel.mention}. Please grant me the necessary permissions.", ephemeral=True)
+        return
 
     guild_report_logs[guild_id] = channel_id
     save_data(guild_report_logs)
