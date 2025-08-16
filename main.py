@@ -60,17 +60,33 @@ class ReportPanel(discord.ui.Modal, title="New Report"):
         
         report_id = str(uuid.uuid4()).split('-')[0]
         
-        # Split the combined fields to get username and ID
-        reporter_username, reporter_id = self.reporter_info.value.split(',', 1)
-        reported_username, reported_id = self.reported_info.value.split(',', 1)
+        # --- Start of the fix ---
+        
+        # Robustly split the reporter info, providing a default if no comma is found
+        reporter_parts = self.reporter_info.value.split(',', 1)
+        if len(reporter_parts) == 2:
+            reporter_username, reporter_id = [part.strip() for part in reporter_parts]
+        else:
+            reporter_username = self.reporter_info.value
+            reporter_id = "N/A" # Default value if no ID is provided
+
+        # Robustly split the reported user info
+        reported_parts = self.reported_info.value.split(',', 1)
+        if len(reported_parts) == 2:
+            reported_username, reported_id = [part.strip() for part in reported_parts]
+        else:
+            reported_username = self.reported_info.value
+            reported_id = "N/A" # Default value if no ID is provided
+        
+        # --- End of the fix ---
 
         embed = discord.Embed(
             title=f"NEW REPORT | ID: {report_id}",
-            description=f"A new report has been filed by `{reporter_username.strip()}`.",
+            description=f"A new report has been filed by `{reporter_username}`.",
             color=discord.Color.blue()
         )
-        embed.add_field(name="REPORTER", value=f"**Username:** `{reporter_username.strip()}`\n**ID:** {reporter_id.strip()}", inline=False)
-        embed.add_field(name="REPORTED USER", value=f"**Username:** `{reported_username.strip()}`\n**ID:** {reported_id.strip()}", inline=False)
+        embed.add_field(name="REPORTER", value=f"**Username:** `{reporter_username}`\n**ID:** {reporter_id}", inline=False)
+        embed.add_field(name="REPORTED USER", value=f"**Username:** `{reported_username}`\n**ID:** {reported_id}", inline=False)
         embed.add_field(name="REASON", value=self.reason.value, inline=False)
         if self.additional_info.value:
             embed.add_field(name="ADDITIONAL INFO", value=self.additional_info.value, inline=False)
