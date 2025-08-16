@@ -32,24 +32,14 @@ intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 class ReportPanel(discord.ui.Modal, title="New Report"):
-    reporter_username = discord.ui.TextInput(
-        label="Reporter's Discord Username",
-        placeholder="e.g., JaneDoe#1234",
+    reporter_info = discord.ui.TextInput(
+        label="Reporter Username & ID",
+        placeholder="e.g., JaneDoe#1234, 1234567890",
         required=True
     )
-    reporter_id = discord.ui.TextInput(
-        label="Reporter's Discord ID",
-        placeholder="e.g., 1234567890",
-        required=True
-    )
-    reported_username = discord.ui.TextInput(
-        label="Reported User's Discord Username",
-        placeholder="e.g., JohnDoe#5678",
-        required=True
-    )
-    reported_id = discord.ui.TextInput(
-        label="Reported User's Discord ID",
-        placeholder="e.g., 1234567890",
+    reported_info = discord.ui.TextInput(
+        label="Reported User Username & ID",
+        placeholder="e.g., JohnDoe#5678, 1234567890",
         required=True
     )
     reason = discord.ui.TextInput(
@@ -70,13 +60,17 @@ class ReportPanel(discord.ui.Modal, title="New Report"):
         
         report_id = str(uuid.uuid4()).split('-')[0]
         
+        # Split the combined fields to get username and ID
+        reporter_username, reporter_id = self.reporter_info.value.split(',', 1)
+        reported_username, reported_id = self.reported_info.value.split(',', 1)
+
         embed = discord.Embed(
             title=f"NEW REPORT | ID: {report_id}",
-            description=f"A new report has been filed by `{self.reporter_username.value}`.",
+            description=f"A new report has been filed by `{reporter_username.strip()}`.",
             color=discord.Color.blue()
         )
-        embed.add_field(name="REPORTER", value=f"**Username:** `{self.reporter_username.value}`\n**ID:** {self.reporter_id.value}", inline=False)
-        embed.add_field(name="REPORTED USER", value=f"**Username:** `{self.reported_username.value}`\n**ID:** {self.reported_id.value}", inline=False)
+        embed.add_field(name="REPORTER", value=f"**Username:** `{reporter_username.strip()}`\n**ID:** {reporter_id.strip()}", inline=False)
+        embed.add_field(name="REPORTED USER", value=f"**Username:** `{reported_username.strip()}`\n**ID:** {reported_id.strip()}", inline=False)
         embed.add_field(name="REASON", value=self.reason.value, inline=False)
         if self.additional_info.value:
             embed.add_field(name="ADDITIONAL INFO", value=self.additional_info.value, inline=False)
