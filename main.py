@@ -82,7 +82,7 @@ class ReportPanel(discord.ui.Modal, title="New Report"):
             color=discord.Color.blue()
         )
         embed.add_field(name="REPORTER", value=f"**Username:** `{self.reporter_username.value}`\n**ID:** {interaction.user.id}", inline=False)
-        embed.add_field(name="REPORTED USER", value=f"**Username:** `{self.reported_username.value}`\n**ID:** {self.reported_id.value}>", inline=False)
+        embed.add_field(name="REPORTED USER", value=f"**Username:** `{self.reported_username.value}`\n**ID:** {self.reported_id.value}", inline=False)
         embed.add_field(name="REASON", value=self.reason.value, inline=False)
         if self.additional_info.value:
             embed.add_field(name="ADDITIONAL INFO", value=self.additional_info.value, inline=False)
